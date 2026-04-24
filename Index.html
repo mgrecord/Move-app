@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Move Plan">
+<meta name="theme-color" content="#2c3330">
+<title>My Movement Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--sage:#7a9e7e;--sage-light:#c5d9c7;--sage-pale:#eef4ef;--warm:#d4855a;--warm-light:#f2d4c4;--ink:#2c3330;--muted:#6b7c74;--cream:#faf8f4;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);display:flex;flex-direction:column}
+.top-bar{background:var(--ink);color:#fff;padding:calc(var(--safe-top) + 14px) 20px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.top-bar h1{font-family:'DM Serif Display',serif;font-size:20px;line-height:1}
+.top-bar h1 em{color:var(--sage-light);font-style:italic}
+.week-chip{background:rgba(255,255,255,.12);color:var(--sage-light);font-size:11px;font-weight:600;padding:4px 11px;border-radius:20px}
+.phase-tabs{display:flex;background:var(--ink);padding:0 16px 12px;gap:8px;flex-shrink:0}
+.phase-tab{flex:1;padding:7px 4px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.08);color:rgba(255,255,255,.4);line-height:1.4;transition:all .2s}
+.phase-tab.ap1{background:var(--sage);color:#fff}
+.phase-tab.ap2{background:var(--warm);color:#fff}
+.phase-tab.ap3{background:var(--sage-light);color:var(--ink)}
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(var(--safe-bottom) + 20px)}
+.slabel{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 7px}
+.slabel:first-child{margin-top:0}
+.phase-card{background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #e4ebe5;margin-bottom:14px;position:relative;overflow:hidden}
+.phase-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%}
+.phase-card.p1::before{background:var(--sage)}
+.phase-card.p2::before{background:var(--warm)}
+.phase-card.p3::before{background:var(--ink)}
+.pc-title{font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:2px}
+.pc-sub{font-size:11px;color:var(--muted);margin-bottom:10px}
+.dlist{list-style:none;display:flex;flex-direction:column;gap:6px}
+.dlist li{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--sage);flex-shrink:0;margin-top:5px}
+.dot-w{background:var(--warm)}
+.week-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;margin-bottom:14px}
+.week-scroll::-webkit-scrollbar{display:none}
+.wpill{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1.5px solid var(--sage-light);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.wpill.sel{background:var(--sage);border-color:var(--sage);color:#fff;font-weight:600}
+.wpill.has{border-color:var(--sage);color:var(--sage)}
+.wpill.sel.has{background:var(--sage);color:#fff}
+.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:12px}
+.dc{border-radius:10px;padding:8px 3px 7px;text-align:center;position:relative;user-select:none}
+.dc.tap{cursor:pointer;transition:transform .1s}
+.dc.tap:active{transform:scale(.91)}
+.dlbl{font-size:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.dico{font-size:15px;display:block;margin-bottom:3px}
+.dtxt{font-size:8px;color:var(--muted);line-height:1.25}
+.dw{background:var(--sage-pale)}.ds{background:var(--warm-light)}.dr{background:#f0f0ed}
+.dc.done::after{content:'✓';position:absolute;top:3px;right:4px;font-size:9px;font-weight:800;color:var(--sage)}
+.dc.done.ds::after{color:var(--warm)}
+.prog-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.prog-wrap{flex:1;height:6px;background:#e4ebe5;border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:var(--sage);border-radius:99px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+.prog-lbl{font-size:12px;font-weight:600;color:var(--sage);white-space:nowrap}
+.ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.ex-card{background:#fdf1ea;border-radius:10px;padding:11px 12px;cursor:pointer;position:relative;user-select:none;transition:transform .1s}
+.ex-card:active{transform:scale(.95)}
+.ex-name{font-weight:600;font-size:12px;color:var(--ink);margin-bottom:2px;padding-right:22px}
+.ex-det{font-size:10px;color:var(--muted);line-height:1.35}
+.ex-chk{position:absolute;top:9px;right:9px;width:18px;height:18px;border-radius:50%;border:1.5px solid #e8c8b5;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:all .2s}
+.ex-card.done .ex-chk{background:var(--warm);border-color:var(--warm);color:#fff}
+textarea{width:100%;min-height:72px;border:1.5px solid var(--sage-light);border-radius:10px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);background:#fff;resize:none;outline:none;-webkit-appearance:none;transition:border-color .2s}
+textarea:focus{border-color:var(--sage)}
+textarea::placeholder{color:#b0bdb2}
+.p3item{display:flex;align-items:center;gap:12px;background:#fff;border-radius:10px;border:1px solid #e4ebe5;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;user-select:none}
+.p3item:active{transform:scale(.98)}
+.p3item.done{background:var(--sage-pale);border-color:var(--sage-light)}
+.p3box{width:20px;height:20px;border-radius:6px;border:2px solid var(--sage-light);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;transition:all .2s}
+.p3item.done .p3box{background:var(--sage);border-color:var(--sage);color:#fff}
+.p3txt{font-size:13px;line-height:1.4}
+.p3item.done .p3txt{color:var(--muted);text-decoration:line-through}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:10px;border:1px solid #e4ebe5;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.stat-ico{font-size:20px}
+.stat-val{font-family:'DM Serif Display',serif;font-size:22px;line-height:1}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:1px}
+.bnote{background:var(--ink);border-radius:12px;padding:14px 18px;text-align:center;margin-top:16px}
+.bnote p{font-size:12px;color:#b0c4b5;line-height:1.6}
+.bnote strong{color:var(--sage-light)}
+.reset-btn{display:block;width:100%;margin-top:16px;padding:12px;background:transparent;border:1.5px solid #e4ebe5;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;transition:all .2s}
+.reset-btn:active{background:#f4f0ec;color:var(--ink)}
+.psec{display:none}.psec.active{display:block}
+.toast{position:fixed;bottom:calc(var(--safe-bottom) + 24px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;padding:9px 20px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);pointer-events:none;white-space:nowrap;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.install-banner{background:var(--sage);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;font-size:12px;line-height:1.4}
+.install-banner .ib-icon{font-size:18px;flex-shrink:0}
+.install-banner .ib-close{margin-left:auto;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:50%;width:22px;height:22px;font-size:14px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+
+<div class="install-banner" id="installBanner">
+<div class="ib-icon">📲</div>
+<div>Tap <strong>Share ↑</strong> then <strong>"Add to Home Screen"</strong> to install this app</div>
+<button class="ib-close" onclick="document.getElementById('installBanner').style.display='none'">✕</button>
+</div>
+
+<div class="top-bar">
+<h1>My <em>Move</em> Plan</h1>
+<div class="week-chip" id="topChip">Week 1</div>
+</div>
+
+<div class="phase-tabs">
+<button class="phase-tab ap1" id="tab1" onclick="switchPhase(1)">Phase 1<br><span style="font-size:9px;opacity:.75">Wks 1–3</span></button>
+<button class="phase-tab" id="tab2" onclick="switchPhase(2)">Phase 2<br><span style="font-size:9px;opacity:.75">Wks 4–8</span></button>
+<button class="phase-tab" id="tab3" onclick="switchPhase(3)">Phase 3<br><span style="font-size:9px;opacity:.75">Wk 9+</span></button>
+</div>
+
+<div class="scroll-area">
+<div class="psec active" id="phase1">
+<div class="phase-card p1">
+<div class="pc-title">Build the Walk</div>
+<div class="pc-sub">Extend what's already working · Weeks 1–3</div>
+<ul class="dlist">
+<li><span class="dot"></span><strong>Goal:</strong> Walk 4 days/week. Pace doesn't matter.</li>
+<li><span class="dot"></span><strong>One add:</strong> On 2 walks, do 3 × 2-min brisk intervals.</li>
+<li><span class="dot"></span><strong>Win:</strong> 4 walks done most weeks. That's it.</li>
+</ul>
+</div>
+<div class="slabel">Select Week</div>
+<div class="week-scroll" id="ws1"></div>
+<div class="slabel">Tap each day you completed</div>
+<div class="day-grid" id="dg1"></div>
+<div class="prog-row">
+<div class="prog-wrap"><div class="prog-fill" id="pf1" style="width:0%"></div></div>
+<div class="prog-lbl" id="pl1">0 / 4</div>
+</div>
+<div class="slabel">Notes for this week</div>
+<textarea id="n1" placeholder="How did it go? How do you feel?"></textarea>
+<div class="bnote"><p>Consistency beats intensity. <strong>3 average walks beat 1 perfect one.</strong></p></div>
+</div>
+
+<div class="psec" id="phase2">
+<div class="phase-card p2">
+<div class="pc-title">Add 2 Strength Days</div>
+<div class="pc-sub">Bodyweight only — no equipment · Weeks 4–8</div>
+<ul class="dlist">
+<li><span class="dot dot-w"></span>Keep walking Mon / Wed / Sat</li>
+<li><span class="dot dot-w"></span>Strength on Tue + Fri — 15 min each</li>
+<li><span class="dot dot-w"></span>3 exercises · 2 sets · 10 reps</li>
+</ul>
+</div>
+<div class="slabel">Select Week</div>
+<div class="week-scroll" id="ws2"></div>
+<div class="slabel">Tap each day you completed</div>
+<div class="day-grid" id="dg2"></div>
+<div class="prog-row">
+<div class="prog-wrap"><div class="prog-fill" id="pf2" style="width:0%;background:var(--warm)"></div></div>
+<div class="prog-lbl" id="pl2" style="color:var(--warm)">0 / 5</div>
+</div>
+<div class="slabel">Strength exercises — tap to check off</div>
+<div class="ex-grid" id="eg"></div>
+<div class="slabel">Notes for this week</div>
+<textarea id="n2" placeholder="How did the strength work feel?"></textarea>
+<div class="bnote"><p>Soreness 1–2 days is normal. <strong>Joint pain means stop and rest.</strong></p></div>
+</div>
+
+<div class="psec" id="phase3">
+<div class="phase-card p3">
+<div class="pc-title">Maintain &amp; Progress</div>
+<div class="pc-sub">Small upgrades when things feel easy · Week 9+</div>
+</div>
+<div class="slabel">Progress Unlocks — tap when achieved</div>
+<div id="p3list"></div>
+<div class="slabel">Your Stats</div>
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-ico">🚶</div><div><div class="stat-val" id="st-walks">0</div><div class="stat-lbl">Total walks</div></div></div>
+<div class="stat-card"><div class="stat-ico">💪</div><div><div class="stat-val" id="st-str">0</div><div class="stat-lbl">Strength days</div></div></div>
+<div class="stat-card"><div class="stat-ico">📅</div><div><div class="stat-val" id="st-wks">0</div><div class="stat-lbl">Weeks logged</div></div></div>
+<div class="stat-card"><div class="stat-ico">🔥</div><div><div class="stat-val" id="st-days">0</div><div class="stat-lbl">Active days</div></div></div>
+</div>
+<div class="slabel">Notes</div>
+<textarea id="n3" placeholder="What's feeling easier? What are you upgrading?"></textarea>
+<button class="reset-btn" onclick="confirmReset()">⚠️ Reset all data</button>
+<div class="bnote"><p>Every 4–6 weeks: <strong>what feels easy now?</strong> Make that slightly harder.</p></div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const P1_DAYS=[{l:'Mon',i:'🚶',t:'Walk 2 mi',c:'dw',tap:true},{l:'Tue',i:'😴',t:'Rest',c:'dr',tap:false},{l:'Wed',i:'🚶',t:'Walk 2 mi',c:'dw',tap:true},{l:'Thu',i:'😴',t:'Rest',c:'dr',tap:false},{l:'Fri',i:'🚶',t:'Walk 2 mi',c:'dw',tap:true},{l:'Sat',i:'🚶',t:'Longer walk',c:'dw',tap:true},{l:'Sun',i:'😴',t:'Rest',c:'dr',tap:false}];
+const P2_DAYS=[{l:'Mon',i:'🚶',t:'Walk',c:'dw',tap:true},{l:'Tue',i:'💪',t:'Strength 15m',c:'ds',tap:true},{l:'Wed',i:'🚶',t:'Walk',c:'dw',tap:true},{l:'Thu',i:'😴',t:'Rest',c:'dr',tap:false},{l:'Fri',i:'💪',t:'Strength 15m',c:'ds',tap:true},{l:'Sat',i:'🚶',t:'Longer walk',c:'dw',tap:true},{l:'Sun',i:'😴',t:'Rest',c:'dr',tap:false}];
+const EXERCISES=[{n:'Wall Sit',d:'Hold 20–30 sec × 2 sets'},{n:'Chair Squat',d:'10 reps × 2 sets'},{n:'Wall Push-Up',d:'10 reps × 2 sets'},{n:'Calf Raise',d:'15 reps × 2 sets'},{n:'Glute Bridge',d:'10 reps × 2 sets'},{n:'Dead Bug',d:'8 reps × 2 sets'}];
+const P3_ITEMS=['Walking 2.5 miles consistently','Added a 3rd set to strength exercises','Doing regular squats (graduated from chair)','Doing countertop push-ups (from wall)','Added a rest-day stretch or yoga session','Picked something easy and made it harder'];
+const KEY='movePlan_v2';
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{};}catch{return{};}}
+function save(d){localStorage.setItem(KEY,JSON.stringify(d));}
+let phase=1,selWeek={1:1,2:4};
+function switchPhase(p){
+phase=p;
+document.querySelectorAll('.psec').forEach(el=>el.classList.remove('active'));
+document.getElementById('phase'+p).classList.add('active');
+['tab1','tab2','tab3'].forEach((id,i)=>{const t=document.getElementById(id);t.className='phase-tab';if(i+1===p)t.classList.add(['ap1','ap2','ap3'][i]);});
+if(p===1){renderWeeks(1);renderDays(1);renderNotes(1);}
+if(p===2){renderWeeks(2);renderDays(2);renderExercises();renderNotes(2);}
+if(p===3){renderP3();renderStats();renderNotes(3);document.getElementById('topChip').textContent='Wk 9+';}
+}
+function renderWeeks(p){
+const range=p===1?[1,2,3]:[4,5,6,7,8];
+const data=load(),container=document.getElementById('ws'+p);
+container.innerHTML='';
+range.forEach(w=>{
+const btn=document.createElement('button');
+btn.className='wpill';
+const wd=data['p'+p+'w'+w];
+if(wd&&((wd.days&&wd.days.length)||wd.notes))btn.classList.add('has');
+if(selWeek[p]===w)btn.classList.add('sel');
+btn.textContent='Week '+w;
+btn.onclick=()=>{selWeek[p]=w;renderWeeks(p);renderDays(p);renderNotes(p);if(p===2)renderExercises();};
+container.appendChild(btn);
+});
+document.getElementById('topChip').textContent='Week '+selWeek[p];
+}
+function renderDays(p){
+const days=p===1?P1_DAYS:P2_DAYS,data=load(),key='p'+p+'w'+selWeek[p];
+const saved=(data[key]&&data[key].days)?data[key].days:[];
+const grid=document.getElementById('dg'+p);
+grid.innerHTML='';
+let done=0;
+days.forEach((d,i)=>{
+const cell=document.createElement('div');
+cell.className='dc '+d.c;
+if(d.tap)cell.classList.add('tap');
+if(saved.includes(i)&&d.tap){cell.classList.add('done');done++;}
+cell.innerHTML=`<div class="dlbl">${d.l}</div><span class="dico">${d.i}</span><div class="dtxt">${d.t}</div>`;
+if(d.tap)cell.onclick=()=>toggleDay(p,i);
+grid.appendChild(cell);
+});
+const target=p===1?4:5,pct=Math.min(100,Math.round(done/target*100));
+document.getElementById('pf'+p).style.width=pct+'%';
+document.getElementById('pl'+p).textContent=done+' / '+target;
+}
+function toggleDay(p,idx){
+const data=load(),key='p'+p+'w'+selWeek[p];
+if(!data[key])data[key]={};
+if(!data[key].days)data[key].days=[];
+const pos=data[key].days.indexOf(idx);
+if(pos===-1){data[key].days.push(idx);showToast('✓ Day logged!');}
+else data[key].days.splice(pos,1);
+save(data);renderDays(p);renderWeeks(p);
+}
+function renderExercises(){
+const data=load(),key='p2w'+selWeek[2];
+const saved=(data[key]&&data[key].ex)?data[key].ex:[];
+const grid=document.getElementById('eg');
+grid.innerHTML='';
+EXERCISES.forEach((e,i)=>{
+const card=document.createElement('div');
+card.className='ex-card'+(saved.includes(i)?' done':'');
+card.innerHTML=`<div class="ex-name">${e.n}</div><div class="ex-det">${e.d}</div><div class="ex-chk">✓</div>`;
+card.onclick=()=>toggleEx(i);
+grid.appendChild(card);
+});
+}
+function toggleEx(idx){
+const data=load(),key='p2w'+selWeek[2];
+if(!data[key])data[key]={};
+if(!data[key].ex)data[key].ex=[];
+const pos=data[key].ex.indexOf(idx);
+if(pos===-1){data[key].ex.push(idx);showToast('💪 Exercise done!');}
+else data[key].ex.splice(pos,1);
+save(data);renderExercises();
+}
+function renderNotes(p){
+if(p===3){const el=document.getElementById('n3'),data=load();el.value=data['p3notes']||'';el.oninput=()=>{const d=load();d['p3notes']=el.value;save(d);};return;}
+const key='p'+p+'w'+selWeek[p],el=document.getElementById('n'+p),data=load();
+el.value=(data[key]&&data[key].notes)?data[key].notes:'';
+el.oninput=()=>{const d=load();if(!d[key])d[key]={};d[key].notes=el.value;save(d);};
+}
+function renderP3(){
+const data=load(),checked=data['p3checks']||[],container=document.getElementById('p3list');
+container.innerHTML='';
+P3_ITEMS.forEach((txt,i)=>{
+const item=document.createElement('div');
+item.className='p3item'+(checked.includes(i)?' done':'');
+item.innerHTML=`<div class="p3box">✓</div><div class="p3txt">${txt}</div>`;
+item.onclick=()=>toggleP3(i);
+container.appendChild(item);
+});
+}
+function toggleP3(idx){
+const data=load();
+if(!data['p3checks'])data['p3checks']=[];
+const pos=data['p3checks'].indexOf(idx);
+if(pos===-1){data['p3checks'].push(idx);showToast('🎉 Progress unlocked!');}
+else data['p3checks'].splice(pos,1);
+save(data);renderP3();
+}
+function renderStats(){
+const data=load();
+let walks=0,strength=0,weeksLogged=0,activeDays=0;
+for(let w=1;w<=3;w++){const k='p1w'+w;if(data[k]&&data[k].days&&data[k].days.length){weeksLogged++;data[k].days.forEach(d=>{if([0,2,4,5].includes(d)){walks++;activeDays++;}});}}
+for(let w=4;w<=8;w++){const k='p2w'+w;if(data[k]&&data[k].days&&data[k].days.length){weeksLogged++;data[k].days.forEach(d=>{if([0,2,5].includes(d)){walks++;activeDays++;}if([1,4].includes(d)){strength++;activeDays++;}});}}
+document.getElementById('st-walks').textContent=walks;
+document.getElementById('st-str').textContent=strength;
+document.getElementById('st-wks').textContent=weeksLogged;
+document.getElementById('st-days').textContent=activeDays;
+}
+function confirmReset(){
+if(confirm('Reset ALL your progress? This cannot be undone.')){localStorage.removeItem(KEY);selWeek={1:1,2:4};switchPhase(1);showToast('Data cleared');}
+}
+let toastTimer;
+function showToast(msg){
+const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+// Hide install banner if already installed as PWA
+if(window.navigator.standalone)document.getElementById('installBanner').style.display='none';
+switchPhase(1);
+</script>
+</body>
+</html>
